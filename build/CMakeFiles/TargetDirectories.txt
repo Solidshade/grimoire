@@ -1,3 +1,0 @@
-/Users/dariusbostan/Projects/grimoire/build/CMakeFiles/grimoire.dir
-/Users/dariusbostan/Projects/grimoire/build/CMakeFiles/edit_cache.dir
-/Users/dariusbostan/Projects/grimoire/build/CMakeFiles/rebuild_cache.dir

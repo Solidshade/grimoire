@@ -31,6 +31,58 @@ std::string packageNameFromUrl(std::string url) {
     return slash == std::string::npos ? url : url.substr(slash + 1);
 }
 
+bool hasMakefile(const fs::path& sourceDir){
+  return fs::exists(sourceDir / "Makefile") ||
+    fs::exists(sourceDir / "makefile") ||
+    fs::exists(sourceDir / "GNUmakefile");
+}
+
+bool buildProject(const fs::path& sourceDir, const fs::path& buildDir, fs::path& outputDir){
+  if(fs::exists(sourceDir / "CMakeLists.txt")){
+    std::cout<<"Detected Cmake project.\n";
+
+    if(!run("cmake -S " + shellQuote(sourceDir.string()) +
+          " -B " + shellQuote(buildDir.string()) + 
+          " -DCMAKE_BUILD_TYPE=Release")) {
+      return false;
+    }
+
+    if (!run("cmake --build " + shellQuote(buildDir.string()) +
+             " --parallel")) {
+      return false;
+    }
+
+    outputDir = buildDir;
+    return true;
+  }
+
+  if (fs::exists(sourceDir / "Cargo.toml")) {
+    std::cout << "Detected Cargo project.\n";
+
+    if (!run("cargo build --release --manifest-path " +
+             shellQuote((sourceDir / "Cargo.toml").string()))) {
+      return false;
+    }
+
+    outputDir = sourceDir / "target" / "release";
+    return true;
+  }
+
+  if (hasMakefile(sourceDir)) {
+    std::cout << "Detected Makefile project.\n";
+
+    if (!run("make -C " + shellQuote(sourceDir.string()))) {
+      return false;
+    }
+
+    outputDir = sourceDir;
+    return true;
+  }
+
+  std::cerr << "No supported build file found.\n";
+  return false;
+}
+
 int summon(const std::string& url, const std::string& ref){
   const std::string name = packageNameFromUrl(url);
   const fs::path root = fs::path(std::getenv("HOME"));
@@ -58,26 +110,15 @@ int summon(const std::string& url, const std::string& ref){
     }
   }
 
-  if (!fs::exists(sourceDir / "CMakeLists.txt")) {
-        std::cerr << "This spell has no CMakeLists.txt yet.\n";
-        return 1;
-    }
+  fs::path outputDir;
 
-  std::cout << "Conjuring build files...\n";
-    if (!run("cmake -S " + shellQuote(sourceDir.string()) +
-             " -B " + shellQuote(buildDir.string()) +
-             " -DCMAKE_BUILD_TYPE=Release")) {
-        return 1;
-    }
+if (!buildProject(sourceDir, buildDir, outputDir)) {
+  return 1;
+}
 
-    std::cout << "Casting build...\n";
-    if (!run("cmake --build " + shellQuote(buildDir.string()) + " --parallel")) {
-        return 1;
-    }
-
-    std::cout << "\nSummoned successfully.\n";
-    std::cout << "Build output: " << buildDir << "\n";
-    return 0;
+std::cout << "\nSummoned successfully.\n";
+std::cout << "Build output: " << outputDir << "\n";
+return 0;
 }
 
 int main(int argc, char* argv[]){
