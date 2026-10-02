@@ -1,0 +1,12 @@
+#+title: Todo
+#+author: shade
+
+| Priority | Feature             | Implemented | gave up |
+|----------+---------------------+-------------+---------|
+|        1 | binary support      | x           | x       |
+|        2 | update function     | x           | x       |
+|        3 | system useflags     | x           | x       |
+|        4 | per-package pinning | x           | x       |
+|        5 | spell.toml files    | x           | x       |
+
+
